@@ -53,4 +53,18 @@ var InstructionsSet map[string]*Instruction = map[string]*Instruction{
 			fmt.Fprint(os.Stdout, value, "\n")
 		},
 	},
+	// divide the stack value onto argument value
+	"idiv": &Instruction{
+		Opcode: 0x2f,
+		Fn: func(st stack.Stack, args []string) {
+			divisor, err := strconv.Atoi(args[0])
+			if err != nil {
+				panic(err)
+			}
+			value := *(*int32)(st.Pop())
+			res := value / int32(divisor)
+
+			st.Push(unsafe.Pointer(&res))
+		},
+	},
 }
