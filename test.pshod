@@ -1,0 +1,5 @@
+ldc 110
+iadd 20
+iadd 10
+idiv 2
+out
