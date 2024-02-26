@@ -32,6 +32,10 @@ func main() {
 
 		//fmt.Printf("Operation: %s | Args: %v\n", operation, args)
 
+		if operation == "" {
+			continue
+		}
+
 		instructions.InstructionsSet[operation].Fn(stack, args)
 	}
 }
