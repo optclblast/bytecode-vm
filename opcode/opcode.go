@@ -46,3 +46,19 @@ var (
 	// OR_OP performs a logical OR operation against two registers.
 	OR_OP = 0x28
 )
+
+type Opcode struct {
+	instruction byte
+}
+
+func NewOpcode(instruction byte) *Opcode {
+	o := new(Opcode)
+
+	o.instruction = instruction
+
+	return o
+}
+
+func (o *Opcode) Value() byte {
+	return o.instruction
+}

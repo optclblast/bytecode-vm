@@ -30,7 +30,7 @@ func (s *stack) Pop() unsafe.Pointer {
 }
 
 // allocstack allocates a vm's stack
-func Allocstack(size uint32) Stack {
+func AllocStack(size uint32) Stack {
 	return &stack{
 		pool: make([]unsafe.Pointer, size),
 	}

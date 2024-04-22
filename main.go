@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/optclblast/bytecode-vm/cpu"
 	"github.com/optclblast/bytecode-vm/instructions"
 	"github.com/optclblast/bytecode-vm/stack"
 )
@@ -19,9 +20,10 @@ func main() {
 	srcFile, err := os.Open(os.Args[1])
 	if err != nil {
 		panic(err)
-	}
 
-	stack := stack.Allocstack(1024)
+
+	cpu := cpu.NewCPU()
+	
 
 	scanner := bufio.NewScanner(srcFile)
 
