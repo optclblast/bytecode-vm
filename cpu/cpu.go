@@ -5,30 +5,45 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync/atomic"
+	"unsafe"
 
-	"github.com/optclblast/bytecode-vm/stack"
+	"github.com/optclblast/drain-machine/opcode"
+)
+
+const (
+	R_MP = iota
+	R_NP
+	R_EP
 )
 
 // VM's cpu object
 type CPU struct {
-	iPointer int
-	regs     [16]*Register // VM registers
-	stack    stack.Stack   // Our stack
-	mem      [0xFFFF]byte  // RAM
-	STDIN    *bufio.Reader
-	STDOUT   *bufio.Writer
+	pc_r    atomic.Int64 // pc register
+	stack_p atomic.Int64 // stack pointer
+	heap_p  atomic.Int64 // heap pointer
+	cons_p  atomic.Int64 // constants area pointer
+	mark_p  atomic.Int64 // mark pointer
+
+	pp int64 // where the stack lives
+
+	regs [3]*Register // VM registers [ mp, np, ep]
+	mem  [0xFFFF]byte // RAM
+
+	STDIN  *bufio.Reader
+	STDOUT *bufio.Writer
 }
 
 func NewCPU() *CPU {
-	var regs [16]*Register
+	var regs [3]*Register
 
 	for i := range regs {
 		regs[i] = new(Register)
 	}
 
 	return &CPU{
-		regs:   regs,
-		stack:  stack.AllocStack(1024),
+		regs: regs,
+
 		STDIN:  bufio.NewReader(os.Stdin),
 		STDOUT: bufio.NewWriter(os.Stdout),
 	}
@@ -49,11 +64,13 @@ func (c *CPU) LoadFile(path string) error {
 }
 
 func (c *CPU) LoadProgramm(data []byte) error {
-	if len(data) > 0xFFFF {
-		return fmt.Errorf("error programm is to large")
+	if len(data) > 0xFFFF/3*2 { // the program requires more than 2/3 of all awailable memory, so there will be no space for stack
+		return fmt.Errorf("error program is to large")
 	}
 
 	c.Reset()
+
+	c.pp = int64(len(data))
 
 	for i := 0; i < len(data); i++ {
 		c.mem[i] = data[i]
@@ -62,6 +79,7 @@ func (c *CPU) LoadProgramm(data []byte) error {
 	return nil
 }
 
+// Reset the CPU state
 func (c *CPU) Reset() {
 	c.mem = [0xFFFF]byte{}
 
@@ -71,18 +89,64 @@ func (c *CPU) Reset() {
 		regs[i] = new(Register)
 	}
 
-	c.stack = stack.AllocStack(1024)
+	c.pc_r = atomic.Int64{}
+	c.heap_p = atomic.Int64{}
+	c.stack_p = atomic.Int64{}
+	c.cons_p = atomic.Int64{}
+	c.pp = 0
 }
 
 func (c *CPU) Run() error {
 	run := true
 	for run {
-		if c.iPointer >= 0xffff {
+		if c.pc_r.Load() >= 0xFFFF {
 			return fmt.Errorf("reading beyond RAM")
 		}
 
-		op := opcode.NewOpcode(c.mem[c.iPointer])
+		op := opcode.NewOpcode(c.mem[c.pc_r.Load()])
+		c.pc_r.Add(1)
+
+		switch int(op.Value()) {
+		case opcode.ABI:
+			p := c.stack_p.Load()
+
+			raw := c.mem[p-7 : p+1]
+
+			value := byteArrayToInt(raw)
+
+			if value < 0 {
+				value *= -1
+			}
+
+			bytes := [8]byte(intToByteArray(value))
+
+			for i, b := range bytes {
+				c.mem[p+int64(i)] = b
+			}
+		}
 	}
 
 	return nil
+}
+
+func intToByteArray(num int64) []byte {
+	size := int(unsafe.Sizeof(num))
+	arr := make([]byte, size)
+
+	for i := 0; i < size; i++ {
+		byt := *(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(&num)) + uintptr(i)))
+		arr[i] = byt
+	}
+	return arr
+}
+
+func byteArrayToInt(arr []byte) int64 {
+	val := int64(0)
+	size := len(arr)
+
+	for i := 0; i < size; i++ {
+		*(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(&val)) + uintptr(i))) = arr[i]
+	}
+
+	return val
 }

@@ -35,3 +35,4 @@ func (r *Register) Value() Value {
 
 	return r.value
 }
+

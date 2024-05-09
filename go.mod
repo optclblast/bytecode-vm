@@ -1,3 +1,3 @@
-module github.com/optclblast/bytecode-vm
+module github.com/optclblast/drain-machine
 
-go 1.22.0
+go 1.22.2

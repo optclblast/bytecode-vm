@@ -1,14 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strings"
-
-	"github.com/optclblast/bytecode-vm/cpu"
-	"github.com/optclblast/bytecode-vm/instructions"
-	"github.com/optclblast/bytecode-vm/stack"
 )
 
 func main() {
@@ -17,27 +11,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	srcFile, err := os.Open(os.Args[1])
+	_, err := os.Open(os.Args[1])
 	if err != nil {
 		panic(err)
-
-
-	cpu := cpu.NewCPU()
-	
-
-	scanner := bufio.NewScanner(srcFile)
-
-	for scanner.Scan() {
-		row := (strings.Split(scanner.Text(), ";")[0])
-		operation := strings.Split(row, " ")[0]
-		args := strings.Split(row, " ")[1:]
-
-		//fmt.Printf("Operation: %s | Args: %v\n", operation, args)
-
-		if operation == "" {
-			continue
-		}
-
-		instructions.InstructionsSet[operation].Fn(stack, args)
 	}
+
+	panic("implement me!")
 }

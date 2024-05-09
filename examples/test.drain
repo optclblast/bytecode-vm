@@ -1,0 +1,35 @@
+# program locals(input, output);
+#    procedure addlocal;
+#    var i: integer; (*The variable i is local to the procedure addlocal*)
+#    begin
+#	i:=i+1
+#    end; (*of addlocal*)
+# begin
+#    addlocal
+# end.
+
+L 3        # Start of addlocal
+ENT 1 L 4
+ENT 2 L 5
+LODI 0 5  # The variable i retrieved from the first location above the mark stack i.e. 5
+LDCI 1
+ADI       # i+1
+STRI 0 5  # New value of i is stored back in 5
+RETP      # End of addlocal
+L 4= 6
+L 5= 7
+L 6
+I 10
+ENT 1 L 7
+ENT 2 L 8
+MST 0
+CUP 0 L 3 # Procedure addlocal is called
+RETP
+L 7= 9
+L 8= 5
+Q
+I0
+MST 0
+CUP 0 L 6 # Main program block is entered
+STP
+Q
